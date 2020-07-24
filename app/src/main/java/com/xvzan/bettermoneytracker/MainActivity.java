@@ -13,6 +13,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.xvzan.bettermoneytracker.dbsettings.mAccount;
+import com.xvzan.bettermoneytracker.dbsettings.mTra;
 import com.xvzan.bettermoneytracker.ui.addaccount.AddAccountDialogFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.xvzan.bettermoneytracker.ui.exportandimport.ExportDialogFragment;
@@ -43,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
     SharedPreferences sharedPref;
     SharedPreferences.Editor spEditor;
     boolean noEquity;
+    public mTra mTraToEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

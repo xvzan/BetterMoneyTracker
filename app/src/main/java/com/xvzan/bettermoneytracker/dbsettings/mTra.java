@@ -5,7 +5,6 @@ import java.util.Date;
 import io.realm.RealmObject;
 
 public class mTra extends RealmObject {
-    private boolean editMe;
     private mAccount accU;
     private mAccount accB;
     private long uAm;
@@ -100,14 +99,6 @@ public class mTra extends RealmObject {
 
     public String getmNote() {
         return mNote.toString();
-    }
-
-    public void setEditme() {
-        editMe = true;
-    }
-
-    public void meEdited() {
-        editMe = false;
     }
 
     public mCurrency getUCurrency() {

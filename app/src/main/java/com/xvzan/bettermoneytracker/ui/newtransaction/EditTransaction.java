@@ -29,6 +29,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.xvzan.bettermoneytracker.BetterMoneyTracker;
+import com.xvzan.bettermoneytracker.MainActivity;
 import com.xvzan.bettermoneytracker.R;
 import com.xvzan.bettermoneytracker.dbsettings.mAccount;
 import com.xvzan.bettermoneytracker.dbsettings.mPlanTask;
@@ -101,9 +102,12 @@ public class EditTransaction extends Fragment {
         //isEdit = false;
         realm = Realm.getDefaultInstance();
         realm.beginTransaction();
-        myTran = realm.where(mTra.class).equalTo("editMe", true).findFirst();
+        //myTran = realm.where(mTra.class).equalTo("editMe", true).findFirst();
+        if (requireActivity() instanceof MainActivity)
+            myTran = ((MainActivity) requireActivity()).mTraToEdit;
         if (myTran != null) {
-            myTran.meEdited();
+            //myTran.meEdited();
+            ((MainActivity) requireActivity()).mTraToEdit = null;
             isEdit = true;
             if (myTran.hasTask()) {
                 modeBefore = myTran.getPlanTask().getLoopType();

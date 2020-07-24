@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.xvzan.bettermoneytracker.MainActivity;
 import com.xvzan.bettermoneytracker.R;
 import com.xvzan.bettermoneytracker.dbsettings.mAccount;
 import com.xvzan.bettermoneytracker.dbsettings.mCurrency;
@@ -122,11 +123,7 @@ public class Adapter_Single extends RecyclerView.Adapter<Adapter_Single.SingleTr
         holder.tsEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try (Realm realm = Realm.getDefaultInstance()) {
-                    realm.beginTransaction();
-                    mTraList.get(position).setEditme();
-                    realm.commitTransaction();
-                }
+                ((MainActivity) mContext).mTraToEdit = mTraList.get(position);
                 Navigation.findNavController(v).navigate(R.id.nav_edit_tran);
             }
         });
