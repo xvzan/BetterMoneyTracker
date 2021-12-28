@@ -180,6 +180,8 @@ public class PlanTaskDialogFragment extends DialogFragment {
                         editTransaction.setRepeatInt(Integer.parseInt(et_interval.getText().toString()));
                         if (hasEndDate)
                             editTransaction.setEndDate(cld.getTime());
+                        else
+                            editTransaction.setEndDate(null);
                 }
                 Objects.requireNonNull(getDialog()).dismiss();
             }
