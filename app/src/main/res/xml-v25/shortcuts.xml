@@ -27,5 +27,19 @@
             android:targetClass="com.xvzan.bettermoneytracker.BalanceActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
+
+    <shortcut
+        android:shortcutId="importandexport"
+        android:enabled="true"
+        android:icon="@mipmap/ic_import_export"
+        android:shortcutShortLabel="@string/import_export"
+        android:shortcutLongLabel="@string/import_export"
+        android:shortcutDisabledMessage="@string/import_export">
+        <intent
+            android:action="com.xvzan.bettermoneytracker.ImportAndExportActivity"
+            android:targetPackage="com.xvzan.bettermoneytracker"
+            android:targetClass="com.xvzan.bettermoneytracker.ImportAndExportActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
     <!-- Specify more shortcuts here. -->
 </shortcuts>
