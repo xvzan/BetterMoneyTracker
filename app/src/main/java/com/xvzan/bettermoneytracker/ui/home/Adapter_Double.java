@@ -3,7 +3,6 @@ package com.xvzan.bettermoneytracker.ui.home;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.icu.util.Currency;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,13 +15,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.xvzan.bettermoneytracker.MainActivity;
 import com.xvzan.bettermoneytracker.R;
+import com.xvzan.bettermoneytracker.dbsettings.mCurrency;
 import com.xvzan.bettermoneytracker.dbsettings.mTra;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 import io.realm.OrderedRealmCollection;
 import io.realm.Realm;
@@ -57,9 +56,16 @@ public class Adapter_Double extends RecyclerView.Adapter<Adapter_Double.DoubleTr
     }
 
     @Override
-    public void onBindViewHolder(Adapter_Double.DoubleTraHolder holder, final int position) {
-        holder.format = new DecimalFormat(mTraList.get(position).getUCurrency().getPattern());
-        double d_Double = Math.pow(10d, mTraList.get(position).getUCurrency().getFractionalDigits());
+    public void onBindViewHolder(Adapter_Double.DoubleTraHolder holder, final int pos) {
+        final int position = holder.getAdapterPosition();
+        String pattern = "0.00";
+        double d_Double = 100;
+        mCurrency currency = mTraList.get(position).getUCurrency();
+        if (currency != null) {
+            d_Double = Math.pow(10d, currency.getFractionalDigits());
+            pattern = currency.getPattern();
+        }
+        holder.format = new DecimalFormat(pattern);
         holder.tdDate.setText(sdf.format(mTraList.get(position).getmDate()));
         holder.tdAU.setText(mTraList.get(position).getAccU().getAname());
         holder.tdAB.setText(mTraList.get(position).getAccB().getAname());

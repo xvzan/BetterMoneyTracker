@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.xvzan.bettermoneytracker.MainActivity;
 import com.xvzan.bettermoneytracker.R;
-import com.xvzan.bettermoneytracker.dbsettings.mAccount;
 import com.xvzan.bettermoneytracker.dbsettings.mCurrency;
 import com.xvzan.bettermoneytracker.dbsettings.mTra;
 
@@ -31,9 +30,9 @@ import io.realm.Sort;
 
 public class Adapter_Single extends RecyclerView.Adapter<Adapter_Single.SingleTraHolder> implements FastScroller.BubbleTextGetter {
 
-    private Context mContext;
+    private final Context mContext;
     @SuppressLint("SimpleDateFormat")
-    private SimpleDateFormat sdf = new SimpleDateFormat("yy/MM/dd");
+    private final SimpleDateFormat sdf = new SimpleDateFormat("yy/MM/dd");
     //private NumberFormat numberFormat;
     private double d_Double;
     private OrderedRealmCollection<mTra> mTraList;
@@ -70,8 +69,10 @@ public class Adapter_Single extends RecyclerView.Adapter<Adapter_Single.SingleTr
     }
 
     @Override
-    public void onBindViewHolder(@NonNull Adapter_Single.SingleTraHolder holder, final int position) {
-        double d_Double;
+    public void onBindViewHolder(@NonNull Adapter_Single.SingleTraHolder holder, final int pos) {
+        final int position = holder.getAdapterPosition();
+        String pattern = "0.00";
+        double d_Double = 100;
         double o_double;
         mCurrency currency;
         if (mTraList.get(position).getAccU().getOrder() == accOrder) {
@@ -93,8 +94,11 @@ public class Adapter_Single extends RecyclerView.Adapter<Adapter_Single.SingleTr
             holder.tsAmount.setTextColor(Color.RED);
         else
             holder.tsAmount.setTextColor(holder.tsDate.getTextColors());
-        d_Double = Math.pow(10d, currency.getFractionalDigits());
-        holder.format = new DecimalFormat(currency.getPattern());
+        if (currency != null) {
+            d_Double = Math.pow(10d, currency.getFractionalDigits());
+            pattern = currency.getPattern();
+        }
+        holder.format = new DecimalFormat(pattern);
         holder.tsAmount.setText(holder.format.format(o_double / d_Double));
         if (longs == null) {
             if (tempLongs != null && tempLongs[0] != null) {
