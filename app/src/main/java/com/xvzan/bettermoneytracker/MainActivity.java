@@ -29,6 +29,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import io.realm.Realm;
 import io.realm.Sort;
@@ -38,8 +39,6 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
     private AppBarConfiguration mAppBarConfiguration;
     public NavController navController;
     NavigationView navigationView;
-    //public static String nowAccount;
-    //Realm realmInstance;
     List<MenuItem> addItems;
     SharedPreferences sharedPref;
     SharedPreferences.Editor spEditor;
@@ -50,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         navSetUP();
     }
@@ -67,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_share)
+                R.id.nav_home, R.id.nav_share, R.id.nav_empty)
                 .setOpenableLayout(drawer)
                 .build();
         navController = Navigation.findNavController(this, R.id.nav_host_fragment);
@@ -78,24 +77,25 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
         reItems();
     }
 
+    boolean menuClick(String acc) {
+        spEditor.putString("nowAccount", acc);
+        spEditor.commit();
+        navController.navigate(R.id.nav_empty);
+        navController.navigate(R.id.action_nav_empty_to_nav_home);
+        if (findViewById(R.id.drawer_layout) != null){
+            ((DrawerLayout)findViewById(R.id.drawer_layout)).closeDrawers();
+        }
+        return true;
+    }
+
     public void reItems() {
         addItems = new ArrayList<>();
         MenuItem menuItem = navigationView.getMenu().add(R.id.groupB, Menu.NONE, 0, R.string.all_transactions).setCheckable(true);
         menuItem.setIcon(R.drawable.ic_all_inclusive_black_24dp);
-        menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                spEditor.putString("nowAccount", "");
-                spEditor.commit();
-                //nowAccount = item.getTitle().toString();
-                navController.navigate(R.id.nav_empty);//GTMD曲线救国
-                navController.navigate(R.id.action_nav_empty_to_nav_home);//GTMD曲线救国
-                return false;
-            }
-        });
+        menuItem.setOnMenuItemClickListener(item -> menuClick(""));
         addItems.add(menuItem);
         try (final Realm realm = Realm.getDefaultInstance()) {
-            if (realm.where(mAccount.class).findAll().size() == 0) {
+            if (realm.where(mAccount.class).findAll().isEmpty()) {
                 noEquity = true;
                 return;
             }
@@ -103,17 +103,7 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
                 if (ma.getAcct() == 4) {
                     MenuItem m = navigationView.getMenu().add(R.id.groupB, Menu.NONE, 1, ma.getAname()).setCheckable(true);
                     m.setIcon(R.drawable.ic_account_balance_wallet_black_24dp);
-                    m.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            spEditor.putString("nowAccount", item.getTitle().toString());
-                            spEditor.commit();
-                            //nowAccount = item.getTitle().toString();
-                            navController.navigate(R.id.nav_empty);//GTMD曲线救国
-                            navController.navigate(R.id.action_nav_empty_to_nav_home);//GTMD曲线救国
-                            return false;
-                        }
-                    });
+                    m.setOnMenuItemClickListener(item -> menuClick(Objects.requireNonNull(item.getTitle()).toString()));
                     addItems.add(m);
                     continue;
                 }
@@ -132,16 +122,7 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
                         m.setIcon(R.drawable.ic_unarchive_black_24dp);
                         break;
                 }
-                m.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        spEditor.putString("nowAccount", item.getTitle().toString());
-                        spEditor.commit();
-                        navController.navigate(R.id.nav_empty);//GTMD曲线救国
-                        navController.navigate(R.id.action_nav_empty_to_nav_home);//GTMD曲线救国
-                        return false;
-                    }
-                });
+                m.setOnMenuItemClickListener(item -> menuClick(Objects.requireNonNull(item.getTitle()).toString()));
                 addItems.add(m);
             }
         }
@@ -167,13 +148,14 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
         reItems();
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_io:
                 boolean hasaccount = false;
                 try (Realm realm = Realm.getDefaultInstance()) {
-                    if (realm.where(mAccount.class).findAll().size() > 0) {
+                    if (!realm.where(mAccount.class).findAll().isEmpty()) {
                         hasaccount = true;
                     }
                 }
@@ -190,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements AddAccountDialogF
                 startActivity(intent);
                 return true;
             case R.id.action_currencies:
-                startActivity(new Intent(this, CurrenciesAcvitity.class));
+                startActivity(new Intent(this, CurrenciesActivity.class));
                 return true;
             case R.id.action_plantasks:
                 startActivity(new Intent(this, PlanTasksActivity.class));

@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,12 +15,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.TimePicker;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -232,28 +229,22 @@ public class EditTransaction extends Fragment {
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         assert imm != null;
         imm.showSoftInput(root, InputMethodManager.SHOW_IMPLICIT);
-        bam.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                InputMethodManager im = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                assert im != null;
-                if (hasFocus) {
-                    im.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
-                } else {
-                    im.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                }
+        bam.setOnFocusChangeListener((v, hasFocus) -> {
+            InputMethodManager im = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            assert im != null;
+            if (hasFocus) {
+                im.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
+            } else {
+                im.hideSoftInputFromWindow(v.getWindowToken(), 0);
             }
         });
         dt = root.findViewById(R.id.bt_nt_Date);
         tm = root.findViewById(R.id.bt_nt_Time);
         note = root.findViewById(R.id.et_nt_note);
-        note.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                }
+        note.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                InputMethodManager imm1 = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm1.hideSoftInputFromWindow(v.getWindowToken(), 0);
             }
         });
         if (isEdit) {
@@ -272,7 +263,6 @@ public class EditTransaction extends Fragment {
             //setInputFields();
         } else {
             final String accstr = requireContext().getSharedPreferences("data", Context.MODE_PRIVATE).getString("nowAccount", "");
-            assert accstr != null;
             if (!accstr.equals("") && nameList.contains(accstr)) {
                 int mmm = nameList.indexOf(accstr);
                 if (accList.get(mmm - 1).getBl1())
@@ -287,267 +277,223 @@ public class EditTransaction extends Fragment {
         if (isMultiCurrency) calculateRatio(uam.getText());
         dt.setText(DateFormat.getDateInstance().format(cld.getTime()));
         tm.setText(DateFormat.getTimeInstance().format(cld.getTime()));
-        dt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DatePickerDialog dpd = new DatePickerDialog(requireContext());
-                dpd.getDatePicker().init(cld.get(Calendar.YEAR), cld.get(Calendar.MONTH), cld.get(Calendar.DAY_OF_MONTH), new DatePicker.OnDateChangedListener() {
-                    @Override
-                    public void onDateChanged(DatePicker datePicker, int i, int i1, int i2) {
+        dt.setOnClickListener(v -> {
+            DatePickerDialog dpd = new DatePickerDialog(requireContext());
+            dpd.getDatePicker().init(cld.get(Calendar.YEAR), cld.get(Calendar.MONTH), cld.get(Calendar.DAY_OF_MONTH), (datePicker, i, i1, i2) -> {
 
-                    }
-                });
-                dpd.setOnDateSetListener(new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                        cld.set(year, month, dayOfMonth);
-                        dt.setText(DateFormat.getDateInstance().format(cld.getTime()));
-                    }
-                });
-                dpd.show();
-            }
+            });
+            dpd.setOnDateSetListener((view, year, month, dayOfMonth) -> {
+                cld.set(year, month, dayOfMonth);
+                dt.setText(DateFormat.getDateInstance().format(cld.getTime()));
+            });
+            dpd.show();
         });
-        tm.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new TimePickerDialog(getContext(), new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        cld.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                        cld.set(Calendar.MINUTE, minute);
-                        tm.setText(DateFormat.getTimeInstance().format(cld.getTime()));
-                    }
-                }, cld.get(Calendar.HOUR_OF_DAY), cld.get(Calendar.MINUTE), true).show();
-            }
-        });
+        tm.setOnClickListener(v -> new TimePickerDialog(getContext(), (view, hourOfDay, minute) -> {
+            cld.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            cld.set(Calendar.MINUTE, minute);
+            tm.setText(DateFormat.getTimeInstance().format(cld.getTime()));
+        }, cld.get(Calendar.HOUR_OF_DAY), cld.get(Calendar.MINUTE), true).show());
         Button ntbt = root.findViewById(R.id.bt_nt);
-        ntbt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (aU.getSelectedItemPosition() == 0 || aB.getSelectedItemPosition() == 0 || aU.getSelectedItemPosition() == aB.getSelectedItemPosition())
+        ntbt.setOnClickListener(v -> {
+            if (aU.getSelectedItemPosition() == 0 || aB.getSelectedItemPosition() == 0 || aU.getSelectedItemPosition() == aB.getSelectedItemPosition())
+                return;
+            String bamstr = bam.getText().toString();
+            long bamint;
+            long uamint;
+            if (bamstr.equals("")) return;
+            if (bamstr.contains("."))
+                bamint = (long) (Double.parseDouble(bamstr) * Math.pow(10d, accList.get(aB.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits()));
+            else
+                bamint = Long.parseLong(bamstr);
+            if (isMultiCurrency) {
+                String uamstr = uam.getText().toString();
+                if (uamstr.equals(""))
                     return;
-                String bamstr = bam.getText().toString();
-                long bamint;
-                long uamint;
-                if (bamstr.equals("")) return;
-                if (bamstr.contains("."))
-                    bamint = (long) (Double.parseDouble(bamstr) * Math.pow(10d, accList.get(aB.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits()));
+                if (uamstr.contains("."))
+                    uamint = (long) (Double.parseDouble(uamstr) * Math.pow(10d, accList.get(aU.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits()));
                 else
-                    bamint = Long.parseLong(bamstr);
-                if (isMultiCurrency) {
-                    String uamstr = uam.getText().toString();
-                    if (uamstr.equals(""))
-                        return;
-                    if (uamstr.contains("."))
-                        uamint = (long) (Double.parseDouble(uamstr) * Math.pow(10d, accList.get(aU.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits()));
-                    else
-                        uamint = Long.parseLong(uamstr);
-                } else uamint = bamint;
-                String tNote = note.getText().toString();
-                if (isEdit) {
-                    int typeCode = 0;
-                    if (modeBefore != 0) {
-                        if (repeatEdited())
-                            typeCode = 2;
-                        else if (transEdited(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamint, bamint, tNote, cld.getTime()))
-                            typeCode = 1;
-                        if (typeCode > 0) {
-                            applymode = 0;
-                            bamBeforeAfter = bamint;
-                            uamBeforeAfter = uamint;
-                            //aUBeforeAfter = aU.getSelectedItemPosition();
-                            //aBBeforeAfter = aB.getSelectedItemPosition();
-                            noteBeforeAfter = tNote;
-                            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                            builder.setTitle(R.string.apply_changes_to);
-                            String[] types;
-                            if (typeCode == 2)
-                                types = getResources().getStringArray(R.array.repeat_apply_types);
-                            else
-                                types = getResources().getStringArray(R.array.repeat_apply_types_3);
-                            final int finalTypeCode = typeCode;
-                            builder.setSingleChoiceItems(types, -1, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    applymode = which + finalTypeCode;//1:Current,2:This&future,3:All
-                                }
-                            });
-                            builder.setPositiveButton(R.string.done, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    switch (applymode) {
-                                        case 1://Current
-                                            loopMode = 0;
-                                            writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamBeforeAfter, bamBeforeAfter, noteBeforeAfter);
-                                            Navigation.findNavController(root).navigateUp();
-                                            break;
-                                        case 2://This and Future
-                                            RealmCollection<mTra> toDelete2 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).greaterThanOrEqualTo("mDate", myTran.getmDate()).findAll();
-                                            isEdit = false;
-                                            writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamBeforeAfter, bamBeforeAfter, noteBeforeAfter);
-                                            realm.beginTransaction();
-                                            myTran.getPlanTask().setDisable();
-                                            toDelete2.deleteAllFromRealm();
-                                            realm.commitTransaction();
-                                            Navigation.findNavController(root).navigateUp();
-                                            break;
-                                        case 3://All
-                                            RealmCollection<mTra> toDelete3 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).findAll();
-                                            isEdit = false;
-                                            Date firstDate = myTran.getPlanTask().getFirstTime();
-                                            if (!cld.getTime().before(myTran.getPlanTask().getFirstTime()))
-                                                cld.setTime(firstDate);
-                                            mPlanTask planTask1 = myTran.getPlanTask();
-                                            realm.beginTransaction();
-                                            toDelete3.deleteAllFromRealm();
-                                            planTask1.deleteFromRealm();
-                                            OrderedRealmCollection<mPlanTask> tasks = realm.where(mPlanTask.class).findAll();
-                                            int i = 1;
-                                            for (mPlanTask planTask : tasks) {
-                                                planTask.setOrder(i);
-                                                i++;
-                                            }
-                                            realm.commitTransaction();
-                                            writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamBeforeAfter, bamBeforeAfter, noteBeforeAfter);
-                                            Navigation.findNavController(root).navigateUp();
-                                            break;
-                                    }
-                                    dialog.dismiss();
-                                }
-                            });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                            return;
-                        }
-                        Navigation.findNavController(root).navigateUp();
-                        return;
-                    } else
-                        writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamint, bamint, tNote);
-                    Navigation.findNavController(root).navigateUp();
-                    return;
-                }
-                writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamint, bamint, tNote);
-                if (isEdit)
-                    Navigation.findNavController(root).navigateUp();
-                else {
-                    try {
-                        Navigation.findNavController(root).navigate(R.id.nav_empty);
-                        Navigation.findNavController(root).navigate(R.id.action_nav_empty_to_nav_home);
-                    } catch (IllegalStateException e) {
-                        requireActivity().finish();
-                    }
-                }
-            }
-        });
-        ImageButton bt_Delete = root.findViewById(R.id.ib_nt_delete);
-        bt_Delete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (isEdit) {
-                    if (myTran.hasTask()) {
+                    uamint = Long.parseLong(uamstr);
+            } else uamint = bamint;
+            String tNote = note.getText().toString();
+            if (isEdit) {
+                int typeCode = 0;
+                if (modeBefore != 0) {
+                    if (repeatEdited())
+                        typeCode = 2;
+                    else if (transEdited(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamint, bamint, tNote, cld.getTime()))
+                        typeCode = 1;
+                    if (typeCode > 0) {
                         applymode = 0;
+                        bamBeforeAfter = bamint;
+                        uamBeforeAfter = uamint;
+                        //aUBeforeAfter = aU.getSelectedItemPosition();
+                        //aBBeforeAfter = aB.getSelectedItemPosition();
+                        noteBeforeAfter = tNote;
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        builder.setTitle(R.string.delete);
-                        builder.setSingleChoiceItems(R.array.repeat_apply_types_3, -1, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                applymode = which + 1;
-                            }
+                        builder.setTitle(R.string.apply_changes_to);
+                        String[] types;
+                        if (typeCode == 2)
+                            types = getResources().getStringArray(R.array.repeat_apply_types);
+                        else
+                            types = getResources().getStringArray(R.array.repeat_apply_types_3);
+                        final int finalTypeCode = typeCode;
+                        builder.setSingleChoiceItems(types, -1, (dialog, which) -> {
+                            applymode = which + finalTypeCode;//1:Current,2:This&future,3:All
                         });
-                        builder.setPositiveButton(R.string.done, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                switch (applymode) {
-                                    case 1://Current
-                                        realm.beginTransaction();
-                                        myTran.deleteFromRealm();
-                                        realm.commitTransaction();
-                                        Navigation.findNavController(root).navigateUp();
-                                        break;
-                                    case 2://This and Future
-                                        RealmCollection<mTra> toDelete2 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).greaterThanOrEqualTo("mDate", myTran.getmDate()).findAll();
-                                        isEdit = false;
-                                        realm.beginTransaction();
-                                        myTran.getPlanTask().setDisable();
-                                        toDelete2.deleteAllFromRealm();
-                                        realm.commitTransaction();
-                                        Navigation.findNavController(root).navigateUp();
-                                        break;
-                                    case 3://All
-                                        RealmCollection<mTra> toDelete3 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).findAll();
-                                        isEdit = false;
-                                        mPlanTask planTask1 = myTran.getPlanTask();
-                                        realm.beginTransaction();
-                                        toDelete3.deleteAllFromRealm();
-                                        planTask1.deleteFromRealm();
-                                        OrderedRealmCollection<mPlanTask> tasks = realm.where(mPlanTask.class).findAll();
-                                        int i = 1;
-                                        for (mPlanTask planTask : tasks) {
-                                            planTask.setOrder(i);
-                                            i++;
-                                        }
-                                        realm.commitTransaction();
-                                        Navigation.findNavController(root).navigateUp();
-                                        break;
-                                }
-                                dialog.dismiss();
+                        builder.setPositiveButton(R.string.done, (dialog, which) -> {
+                            switch (applymode) {
+                                case 1://Current
+                                    loopMode = 0;
+                                    writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamBeforeAfter, bamBeforeAfter, noteBeforeAfter);
+                                    Navigation.findNavController(root).navigateUp();
+                                    break;
+                                case 2://This and Future
+                                    RealmCollection<mTra> toDelete2 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).greaterThanOrEqualTo("mDate", myTran.getmDate()).findAll();
+                                    isEdit = false;
+                                    writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamBeforeAfter, bamBeforeAfter, noteBeforeAfter);
+                                    realm.beginTransaction();
+                                    myTran.getPlanTask().setDisable();
+                                    toDelete2.deleteAllFromRealm();
+                                    realm.commitTransaction();
+                                    Navigation.findNavController(root).navigateUp();
+                                    break;
+                                case 3://All
+                                    RealmCollection<mTra> toDelete3 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).findAll();
+                                    isEdit = false;
+                                    Date firstDate = myTran.getPlanTask().getFirstTime();
+                                    if (!cld.getTime().before(myTran.getPlanTask().getFirstTime()))
+                                        cld.setTime(firstDate);
+                                    mPlanTask planTask1 = myTran.getPlanTask();
+                                    realm.beginTransaction();
+                                    toDelete3.deleteAllFromRealm();
+                                    planTask1.deleteFromRealm();
+                                    OrderedRealmCollection<mPlanTask> tasks = realm.where(mPlanTask.class).findAll();
+                                    int i = 1;
+                                    for (mPlanTask planTask : tasks) {
+                                        planTask.setOrder(i);
+                                        i++;
+                                    }
+                                    realm.commitTransaction();
+                                    writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamBeforeAfter, bamBeforeAfter, noteBeforeAfter);
+                                    Navigation.findNavController(root).navigateUp();
+                                    break;
                             }
+                            dialog.dismiss();
                         });
                         AlertDialog dialog = builder.create();
                         dialog.show();
                         return;
                     }
-                    realm.beginTransaction();
-                    myTran.deleteFromRealm();
-                    realm.commitTransaction();
-                }
-                Navigation.findNavController(root).navigate(R.id.action_nav_edit_tran_to_nav_home);
+                    Navigation.findNavController(root).navigateUp();
+                    return;
+                } else
+                    writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamint, bamint, tNote);
+                Navigation.findNavController(root).navigateUp();
+                return;
             }
+            writeTransaction(aU.getSelectedItemPosition(), aB.getSelectedItemPosition(), uamint, bamint, tNote);
+            if (isEdit)
+                Navigation.findNavController(root).navigateUp();
+            else {
+                try {
+                    Navigation.findNavController(root).navigate(R.id.nav_empty);
+                    Navigation.findNavController(root).navigate(R.id.action_nav_empty_to_nav_home);
+                } catch (IllegalStateException e) {
+                    requireActivity().finish();
+                }
+            }
+        });
+        ImageButton bt_Delete = root.findViewById(R.id.ib_nt_delete);
+        bt_Delete.setOnClickListener(v -> {
+            if (isEdit) {
+                if (myTran.hasTask()) {
+                    applymode = 0;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    builder.setTitle(R.string.delete);
+                    builder.setSingleChoiceItems(R.array.repeat_apply_types_3, -1, (dialog, which) -> applymode = which + 1);
+                    builder.setPositiveButton(R.string.done, (dialog, which) -> {
+                        switch (applymode) {
+                            case 1://Current
+                                realm.beginTransaction();
+                                myTran.deleteFromRealm();
+                                realm.commitTransaction();
+                                Navigation.findNavController(root).navigateUp();
+                                break;
+                            case 2://This and Future
+                                RealmCollection<mTra> toDelete2 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).greaterThanOrEqualTo("mDate", myTran.getmDate()).findAll();
+                                isEdit = false;
+                                realm.beginTransaction();
+                                myTran.getPlanTask().setDisable();
+                                toDelete2.deleteAllFromRealm();
+                                realm.commitTransaction();
+                                Navigation.findNavController(root).navigateUp();
+                                break;
+                            case 3://All
+                                RealmCollection<mTra> toDelete3 = realm.where(mTra.class).equalTo("planTask.order", myTran.getPlanTask().getOrder()).findAll();
+                                isEdit = false;
+                                mPlanTask planTask1 = myTran.getPlanTask();
+                                realm.beginTransaction();
+                                toDelete3.deleteAllFromRealm();
+                                planTask1.deleteFromRealm();
+                                OrderedRealmCollection<mPlanTask> tasks = realm.where(mPlanTask.class).findAll();
+                                int i = 1;
+                                for (mPlanTask planTask : tasks) {
+                                    planTask.setOrder(i);
+                                    i++;
+                                }
+                                realm.commitTransaction();
+                                Navigation.findNavController(root).navigateUp();
+                                break;
+                        }
+                        dialog.dismiss();
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    return;
+                }
+                realm.beginTransaction();
+                myTran.deleteFromRealm();
+                realm.commitTransaction();
+            }
+            Navigation.findNavController(root).navigate(R.id.action_nav_edit_tran_to_nav_home);
         });
         ImageButton ib_sw = root.findViewById(R.id.ib_switch);
-        ib_sw.setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void onClick(View view) {
-                isSwitching = true;
-                int temp = aU.getSelectedItemPosition();
-                aU.setSelection(aB.getSelectedItemPosition());
-                aB.setSelection(temp);
-                if (isMultiCurrency) {
-                    String tempStr;
-                    if (uam.getText().toString().equals(""))
-                        tempStr = "";
-                    else if (uam.getText().toString().contains("."))
-                        tempStr = uam.getText().toString();
-                    else
-                        tempStr = Double.toString(Double.parseDouble(uam.getText().toString()) /
-                                Math.pow(10d, accList.get(aB.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits()));
-                    if (bam.getText().toString().equals(""))
-                        tempStr = "";
-                    else if (bam.getText().toString().contains("."))
-                        uam.setText(bam.getText().toString());
-                    else
-                        uam.setText(Double.toString(Double.parseDouble(bam.getText().toString()) /
-                                Math.pow(10d, accList.get(aU.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits())));
-                    bam.setText(tempStr);
-                    calculateRatio(uam.getText());
-                }
-                isSwitching = false;
+        ib_sw.setOnClickListener(view -> {
+            isSwitching = true;
+            int temp = aU.getSelectedItemPosition();
+            aU.setSelection(aB.getSelectedItemPosition());
+            aB.setSelection(temp);
+            if (isMultiCurrency) {
+                String tempStr;
+                if (uam.getText().toString().equals(""))
+                    tempStr = "";
+                else if (uam.getText().toString().contains("."))
+                    tempStr = uam.getText().toString();
+                else
+                    tempStr = Double.toString(Double.parseDouble(uam.getText().toString()) /
+                            Math.pow(10d, accList.get(aB.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits()));
+                if (bam.getText().toString().equals(""))
+                    tempStr = "";
+                else if (bam.getText().toString().contains("."))
+                    uam.setText(bam.getText().toString());
+                else
+                    uam.setText(Double.toString(Double.parseDouble(bam.getText().toString()) /
+                            Math.pow(10d, accList.get(aU.getSelectedItemPosition() - 1).getCurrency().getFractionalDigits())));
+                bam.setText(tempStr);
+                calculateRatio(uam.getText());
             }
+            isSwitching = false;
         });
-        repeatButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                PlanTaskDialogFragment planTaskDialogFragment = new PlanTaskDialogFragment(etself);
-                if (loopMode != 0) {
-                    planTaskDialogFragment.setOldTypeAndInterval(loopMode, repeatInt);
-                    if (MonthReverse)
-                        planTaskDialogFragment.setCb_reverse();
-                    if (endDate != null)
-                        planTaskDialogFragment.setOldEndDate(endDate);
-                }
-                planTaskDialogFragment.show(requireActivity().getSupportFragmentManager(), "edit_repeat_dialog");
+        repeatButton.setOnClickListener(v -> {
+            PlanTaskDialogFragment planTaskDialogFragment = new PlanTaskDialogFragment(etself);
+            if (loopMode != 0) {
+                planTaskDialogFragment.setOldTypeAndInterval(loopMode, repeatInt);
+                if (MonthReverse)
+                    planTaskDialogFragment.setCb_reverse();
+                if (endDate != null)
+                    planTaskDialogFragment.setOldEndDate(endDate);
             }
+            planTaskDialogFragment.show(requireActivity().getSupportFragmentManager(), "edit_repeat_dialog");
         });
         if (isEdit && myTran.hasTask())
             repeatButton.setImageTintList(requireContext().getResources().getColorStateList(R.color.repeating, requireContext().getTheme()));

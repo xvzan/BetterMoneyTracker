@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
@@ -13,12 +14,15 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.xvzan.bettermoneytracker.R;
 import com.xvzan.bettermoneytracker.dbsettings.mAccount;
+
+import java.util.Objects;
 
 import io.realm.Realm;
 
@@ -28,17 +32,39 @@ public class HomeFragment extends Fragment {
     private Realm realmInstance;
     private ProgressBar homeProgress;
     private String accstr;
+    private boolean showAll;
+
+    MenuProvider menuProvider = new MenuProvider() {
+        @Override
+        public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+            menuInflater.inflate(R.menu.main, menu);
+        }
+
+        @Override
+        public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+            return false;
+        }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+        requireActivity().addMenuProvider(menuProvider);
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        //super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.main, menu);
+    public void onStart() {
+        super.onStart();
+        if (showAll)
+            Objects.requireNonNull(((AppCompatActivity) requireActivity()).getSupportActionBar()).setTitle(R.string.all_transactions);
+        else
+            Objects.requireNonNull(((AppCompatActivity) requireActivity()).getSupportActionBar()).setTitle(accstr);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        requireActivity().removeMenuProvider(menuProvider);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -49,7 +75,7 @@ public class HomeFragment extends Fragment {
         accstr = requireContext().getSharedPreferences("data", Context.MODE_PRIVATE).getString("nowAccount", "");
         TotalManager.cancelAll();
         homeProgress = root.findViewById(R.id.homeProgress);
-        if (accstr.equals(""))
+        if (accstr.isEmpty())
             showAll();
         else
             showCat();
@@ -62,29 +88,25 @@ public class HomeFragment extends Fragment {
 
     private void showCat() {
         homeProgress.setVisibility(View.VISIBLE);
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(accstr);
         layt.setLayoutManager(new LinearLayoutManager(getContext()));
         int accOrder;
-        accOrder = realmInstance.where(mAccount.class).equalTo("aname", accstr).findFirst().getOrder();
+        accOrder = Objects.requireNonNull(realmInstance.where(mAccount.class).equalTo("aname", accstr).findFirst()).getOrder();
         Adapter_Single adapter_single = new Adapter_Single(getActivity(), accOrder, realmInstance);
         layt.setAdapter(adapter_single);
         int i = adapter_single.getItemCount();
         layt.scrollToPosition(i - 1);
         TotalArray totalArray = new TotalArray(accOrder, i);
         TotalManager.getInstance().setRecyclerView(adapter_single, totalArray, homeProgress);
+        showAll = false;
     }
 
     private void showAll() {
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(R.string.all_transactions);
         layt.setLayoutManager(new LinearLayoutManager(getContext()));
         Adapter_Double adapter_double = new Adapter_Double(requireActivity(), realmInstance);
         layt.setAdapter(adapter_double);
         homeProgress.setVisibility(View.INVISIBLE);
         layt.scrollToPosition(adapter_double.getItemCount() - 1);
-    }
-
-    public void scrollToBottom() {
-        layt.scrollToPosition(layt.getAdapter().getItemCount() - 1);
+        showAll = true;
     }
 
     @Override

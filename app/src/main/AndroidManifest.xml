@@ -58,7 +58,7 @@
         </activity>
         <activity
             android:exported="true"
-            android:name=".CurrenciesAcvitity"
+            android:name=".CurrenciesActivity"
             android:label="@string/currencies"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">

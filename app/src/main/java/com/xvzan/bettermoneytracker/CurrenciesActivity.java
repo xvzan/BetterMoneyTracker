@@ -18,7 +18,7 @@ import com.xvzan.bettermoneytracker.ui.share.SimpleItemTouchHelperCallback;
 
 import io.realm.Realm;
 
-public class CurrenciesAcvitity extends AppCompatActivity {
+public class CurrenciesActivity extends AppCompatActivity {
 
     Realm realm;
 
